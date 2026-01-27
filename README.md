@@ -25,6 +25,7 @@
 
 ### 🛠 System Architecture
 > **[여기에 PPT 8페이지의 '주요 프로세스' 다이어그램 이미지를 넣으세요]**
+![Uploading Screenshot from 2025-10-19 16-50-56.png…]()
 
 이 시스템은 크게 **인지(Perception)**, **판단(Decision)**, **제어(Control)** 3단계로 구성됩니다.
 1.  **Input:** RealSense Depth Camera를 통해 RGB 및 Depth 데이터 수집
