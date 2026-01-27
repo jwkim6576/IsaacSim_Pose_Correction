@@ -5,11 +5,19 @@
 
 실제 환경을 **NVIDIA Isaac Sim**으로 완벽하게 구현하고, **YOLOv8-OBB**를 통해 객체의 회전 각도까지 정밀하게 인식하여 로봇이 자동으로 정렬(Pick & Place)하는 자동화 프로세스를 구축했습니다.
 
-### 👥 Role & Contribution (Kim Jung-wook)
-**Team Leader & Robotics Engineer**
+### 👥 Team & Roles
+**Kim Jung-wook (Team Leader & Robotics Engineer)**
 * **Isaac Sim Environment Setup:** 실제 공장 환경과 동일한 조명, 컨베이어 벨트, 로봇(UR10/Doosan M0609) 환경 구축 (Digital Twin)
 * **Robot Manipulation:** ROS2 기반의 로봇 제어 노드 작성 및 Pick & Place 모션 플래닝 구현
 * **System Integration:** Vision(YOLO) 데이터와 Robot Control 간의 통신 파이프라인 최적화
+
+**Lee Hyo-won (AI & System Engineer)**
+* **YOLO Training:** Custom Dataset을 활용한 YOLOv8-OBB 모델 학습 및 하이퍼파라미터 튜닝
+* **ROS Integration:** AI 추론 결과(Bounding Box, Angle)를 ROS2 토픽으로 발행(Publish)하는 인터페이스 개발
+
+**Kim Da-bin (Data Engineer & PM)**
+* **Data Pipeline:** Roboflow를 활용한 학습 데이터셋 구축 및 레이블링(Labeling) 작업 수행
+* **Documentation:** 프로젝트 산출물 관리, 발표 자료 제작 및 시연 영상 시나리오 기획
 
 ---
 
