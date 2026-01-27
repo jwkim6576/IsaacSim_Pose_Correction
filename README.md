@@ -5,6 +5,8 @@
 
 실제 환경을 **NVIDIA Isaac Sim**으로 완벽하게 구현하고, **YOLOv8-OBB**를 통해 객체의 회전 각도까지 정밀하게 인식하여 로봇이 자동으로 정렬(Pick & Place)하는 자동화 프로세스를 구축했습니다.
 
+---
+
 ### 👥 Team & Roles
 **Kim Jung-wook (Team Leader & Robotics Engineer)**
 * **Isaac Sim Environment Setup:** 실제 공장 환경과 동일한 조명, 컨베이어 벨트, 로봇(UR10/Doosan M0609) 환경 구축 (Digital Twin)
