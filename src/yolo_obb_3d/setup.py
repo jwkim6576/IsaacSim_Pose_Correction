@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'obb_node = yolo_obb_3d.obb_node:main',
+            'obb_node_fin = yolo_obb_3d.obb_node_fin:main',
             'pose_subscriber_ros = yolo_obb_3d.pose_subscriber_ros:main',
         ],
     },
