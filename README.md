@@ -6,24 +6,14 @@
 
 ## 💻 Tech Stack
 
-### OS
-![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04%20LTS-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
-
-### Middleware
-![ROS2](https://img.shields.io/badge/ROS2-Humble-22314E?style=for-the-badge&logo=ros&logoColor=white)
-
-### AI / Vision
-![YOLOv8](https://img.shields.io/badge/YOLO-v8%20OBB-00FFFF?style=for-the-badge)
-![OpenCV](https://img.shields.io/badge/OpenCV-4.x-5C3EE8?style=for-the-badge&logo=opencv)
-![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)
-
-### Hardware
-![Doosan](https://img.shields.io/badge/Doosan-M0609-000000?style=for-the-badge)
-![RealSense](https://img.shields.io/badge/Intel-RealSense%20D455-0071C5?style=for-the-badge&logo=intel)
-
-### Language
-![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)
-
+| Category | Technology |
+|:---:|:---|
+| **Simulation** | ![IsaacSim](https://img.shields.io/badge/NVIDIA-Isaac%20Sim-76B900?style=for-the-badge&logo=nvidia&logoColor=white) ![Omniverse](https://img.shields.io/badge/NVIDIA-Omniverse-76B900?style=for-the-badge&logo=nvidia&logoColor=white) |
+| **OS** | ![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04%20LTS-E95420?style=for-the-badge&logo=ubuntu&logoColor=white) |
+| **Middleware** | ![ROS2](https://img.shields.io/badge/ROS2-Humble-22314E?style=for-the-badge&logo=ros&logoColor=white) |
+| **AI / Vision** | ![YOLOv8](https://img.shields.io/badge/YOLO-v8%20OBB-00FFFF?style=for-the-badge) ![OpenCV](https://img.shields.io/badge/OpenCV-4.x-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white) |
+| **Hardware** | ![Doosan](https://img.shields.io/badge/Doosan-M0609-000000?style=for-the-badge) ![RealSense](https://img.shields.io/badge/Intel-RealSense%20D455-0071C5?style=for-the-badge&logo=intel&logoColor=white) |
+| **Language** | ![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white) |
 
 <br>
 
