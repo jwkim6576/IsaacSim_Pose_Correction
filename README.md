@@ -116,56 +116,114 @@ ros2 run my_examples move_joint --ros-args \
 
 ---
 
-## 🔧 주요 파라미터 설명
+✅ [추가] 주요 파라미터 요약
 
-| Parameter | Description |
-|----------|-------------|
-| `defect_need / ok_need` | 불량/정상 상태 전환을 위한 연속 프레임 수 |
-| `minangle_deg / maxangle_deg` | OK 판정 Yaw 각도 범위 |
-| `approach_sec / pick_sec / retreat_sec` | 모션 시퀀스 단계별 유지 시간 |
-| `pick_pose / approach_pose` | 로봇 관절 목표 각도 (라디안) |
-| `hint_gain` | `/target_pose` 기반 joint_1 보정 강도 |
+defect_need, ok_need: 불량/정상 상태 전환을 위한 연속 프레임 수(디바운스)
 
----
+minangle_deg, maxangle_deg: OK로 판단할 yaw 각도 범위
 
-## 1. Oriented Bounding Box (OBB) Detection
+approach_sec, pick_sec, retreat_sec: 시퀀스 단계별 유지 시간
 
-YOLOv8-OBB를 사용하여 물체의 **Heading Angle (Yaw)** 까지 추정 가능합니다.
+pick_pose, approach_pose, retreat_pose: 모션 시퀀스의 joint 목표(라디안)
 
-> **[여기에 YOLO OBB Detection 결과 스크린샷 삽입]**
+hint_gain: /target_pose 기반으로 joint_1을 살짝 보정하는 “시각적 반응성” 연출 파라미터
 
----
+<br>
+1. Oriented Bounding Box (OBB) Detection
 
-## 2. 3D Coordinate Conversion (Deprojection)
+기존의 수평적인 Bounding Box(AABB)는 회전된 물체의 정확한 각도를 알 수 없는 한계가 있었습니다. 이를 극복하기 위해 YOLOv8-OBB 모델을 도입하여 물체의 Heading Angle(Yaw) 값을 실시간으로 추론했습니다.
 
-```text
-X = (u - cx) * Z / fx
-Y = (v - cy) * Z / fy
+[여기에 PPT 17페이지의 YOLO 탐지 결과(초록색 박스 쳐진 것) 이미지를 넣으세요]
 
-- **Z**: Depth Map에서 추출한 거리 값  
-- **fx, fy**: 카메라 초점 거리 (Focal Length)  
-- **cx, cy**: 주점 좌표 (Principal Point)
+✅ [추가] Key Point
 
----
+OBB의 theta(radian) 값을 활용해 물체의 yaw를 추정하고, OK/DEFECT 판정 기준으로 사용합니다.
 
-## 3. Digital Twin Simulation
+단일 프레임 오탐을 줄이기 위해 연속 프레임 디바운스를 적용합니다.
 
-Isaac Sim 환경에서 실제 공정을 시뮬레이션하여 현실 적용 시 발생할 수 있는 시행착오를 최소화합니다.
+2. 3D Coordinate Conversion (Deprojection)
 
-> **[여기에 IsaacSim 환경 스크린샷 삽입]**
+2D 이미지 상의 픽셀 좌표 $(u, v)$를 3D 로봇 좌표계 $(x, y, z)$로 변환하기 위해 핀홀 카메라 모델을 적용했습니다.
 
----
+𝑋
+=
+(
+𝑢
+−
+𝑐
+𝑥
+)
+×
+𝑍
+/
+𝑓
+𝑥
+𝑌
+=
+(
+𝑣
+−
+𝑐
+𝑦
+)
+×
+𝑍
+/
+𝑓
+𝑦
+X=(u−c
+x
+	​
 
-## 📊 Project Results
+)×Z/f
+x
+	​
 
-- **Detection Accuracy:** mAP50-95 기준 **90% 이상**  
-- **Pose Estimation Error:** 평균 오차 **5도 내외**  
-- **Impact:** 불량 부품 자동 재정렬 → 공정 병목 현상 감소 및 생산 효율 향상
+Y=(v−c
+y
+	​
 
----
+)×Z/f
+y
+	​
 
-## 🎥 Demo Video
 
-> **[여기에 시연 영상 GIF 또는 유튜브 링크 삽입]**
+$Z$: Depth Map에서 추출한 심도 값
 
----
+$f_x, f_y$: 카메라 초점 거리 (Focal Length)
+
+$c_x, c_y$: 주점 (Principal Point)
+
+✅ [추가] Key Point
+
+검출된 픽셀 중심점과 Depth를 결합해 3D 좌표를 계산하고 /object_pose로 발행합니다.
+
+불량 확정 순간의 pose는 /target_pose로 1회 고정(latch) 발행하여 제어의 입력을 안정화합니다.
+
+3. Digital Twin Simulation
+
+물리 엔진이 적용된 Isaac Sim 환경에서 컨베이어 벨트의 마찰력과 로봇의 동역학을 시뮬레이션하여, 실제 현장 도입 시 발생할 수 있는 시행착오를 최소화했습니다.
+
+[여기에 PPT 10페이지나 11페이지의 시뮬레이션 환경 캡처를 넣으세요]
+
+✅ [추가] (선택) RViz Visualization
+
+/object_marker (CUBE): 실시간 감지 물체의 위치/자세 시각화(초록 박스)
+
+/target_marker (SPHERE): 불량 확정 순간의 목표 지점 시각화(빨간 점)
+
+/target_pose: 목표 pose 좌표축 표시
+
+<br>
+📊 Project Results
+
+[cite_start]Detection Accuracy: mAP50-95 기준 90% 이상 달성 [cite: 140]
+
+[cite_start]Pose Estimation Error: 평균 오차 5도 내외로 정밀 보정 성공 [cite: 382]
+
+Impact: 불량 부품의 자동 재정렬을 통해 공정 병목 현상 해소 및 생산 효율 증대 기대
+
+<br>
+🎥 Demo Video
+
+[여기에 시연 영상 GIF나 유튜브 링크를 넣으면 완벽합니다!]
