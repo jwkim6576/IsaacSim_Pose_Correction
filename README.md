@@ -1,6 +1,7 @@
 # 🤖 Isaac Sim & YOLOv8-OBB based 3D Pose Correction System
 
-![Project Banner](https://placeholder.com/wp-content/uploads/2018/10/placeholder.com-logo1.png)
+<img width="1404" height="947" alt="image" src="https://github.com/user-attachments/assets/22f419b0-5c83-4b87-8556-04bc781fbfb8" />
+
 
 <br>
 
@@ -38,7 +39,8 @@
 
 ## 🛠 System Architecture
 
-![System Architecture](이미지_경로_여기에_넣기)
+<img width="2034" height="570" alt="image" src="https://github.com/user-attachments/assets/d89a93c0-da07-4d6d-b926-2c1c53a708e0" />
+
 
 이 시스템은 **Perception(인지) → Decision(판단) → Control(제어)**의 유기적인 데이터 파이프라인으로 구성됩니다.
 
@@ -46,7 +48,8 @@
 2.  **Control Node (`move_joint.py`):** 타겟 좌표를 수신하여 역기구학(IK) 기반이 아닌, 관절(Joint) 단위의 정밀 시퀀스 제어 수행.
 3.  **Simulation (Isaac Sim):** 실제 물리 엔진이 적용된 환경에서 로봇과 그리퍼가 상호작용.
 
-![Communication Flow](이미지_경로_여기에_넣기)
+<img width="1268" height="1045" alt="image" src="https://github.com/user-attachments/assets/dc735a11-7782-4bf6-9cf9-f7a859be7c35" />
+
 
 <br>
 
@@ -88,13 +91,13 @@
 
 
 ### 1. Vision Node 실행 (YOLO 모델 경로 및 민감도 설정)
-ros2 run my_pkg obb_node_fin --ros-args \
+ros2 run yolo_obb_3d obb_node_fin --ros-args \
     -p model_path:="/path/to/best.pt" \
     -p defect_need:=5 \
     -p minangle_deg:=10.0
 
 ### 2. Control Node 실행 (동작 속도 및 홈 포지션 설정)
-ros2 run my_pkg move_joint_fin --ros-args \
+ros2 run my_examples move_joint_fin --ros-args \
     -p approach_sec:=1.5 \
     -p pick_sec:=1.0 \
     -p hint_gain:=0.8
@@ -109,10 +112,13 @@ ros2 run my_pkg move_joint_fin --ros-args \
 
   * **Impact:** 불량 부품의 자동 재정렬을 통해 공정 병목 현상 해소 및 생산 효율 증대 기대
 
+<img width="2054" height="1059" alt="image" src="https://github.com/user-attachments/assets/13ff309c-a427-4bb5-affb-d1f57412b034" />
+
+<img width="1936" height="941" alt="image" src="https://github.com/user-attachments/assets/2a96205d-1071-4fd6-8c0b-5bb80f382293" />
+
+
 <br>
 
 ## 🎥 Demo Video
 
-
-
-> **[여기에 시연 영상 GIF나 유튜브 링크를 넣으면 완벽합니다!]**
+https://youtu.be/bfyb3jnT2ic
