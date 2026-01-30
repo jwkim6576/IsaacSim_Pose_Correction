@@ -87,13 +87,13 @@
 본 프로젝트는 ROS2 패키지로 구성되어 있으며, 주요 노드는 파라미터를 통해 튜닝 가능합니다.
 
 
-# 1. Vision Node 실행 (YOLO 모델 경로 및 민감도 설정)
+### 1. Vision Node 실행 (YOLO 모델 경로 및 민감도 설정)
 ros2 run my_pkg obb_node_fin --ros-args \
     -p model_path:="/path/to/best.pt" \
     -p defect_need:=5 \
     -p minangle_deg:=10.0
 
-# 2. Control Node 실행 (동작 속도 및 홈 포지션 설정)
+### 2. Control Node 실행 (동작 속도 및 홈 포지션 설정)
 ros2 run my_pkg move_joint_fin --ros-args \
     -p approach_sec:=1.5 \
     -p pick_sec:=1.0 \
