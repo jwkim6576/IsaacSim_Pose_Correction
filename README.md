@@ -37,65 +37,130 @@
 
 ## 🛠 System Architecture
 
-
-
 [Image of System Architecture Diagram]
 
+### 📡 Communication Flow Chart
+> **[INSERT: Communication Flow Chart Image Here]**  
+> 예: `assets/flowchart.png`
+
+### 🧩 Architecture Structure Diagram
+> **[INSERT: Architecture Diagram Image Here]**  
+> 예: `assets/architecture.png`
 
 이 시스템은 크게 **인지(Perception)**, **판단(Decision)**, **제어(Control)** 3단계로 구성됩니다.
 
-1.  **Input:** RealSense Depth Camera를 통해 RGB 및 Depth 데이터 수집
-2.  **3D Pose Estimation:** YOLOv8-OBB로 객체의 2D 좌표와 기울기($\theta$)를 검출하고, Depth 정보를 결합해 3D 공간 좌표(X, Y, Z)로 변환
-3.  **Robot Control:** 보정이 필요한 각도(Threshold 초과 시)가 감지되면 로봇이 해당 좌표로 이동하여 부품을 정렬
+1. **Input:** RealSense Depth Camera를 통해 RGB 및 Depth 데이터 수집  
+2. **3D Pose Estimation:** YOLOv8-OBB로 객체의 2D 좌표와 기울기(θ)를 검출하고 Depth 정보를 결합하여 3D 좌표(X, Y, Z)로 변환  
+3. **Robot Control:** 보정이 필요한 각도가 감지되면 로봇이 해당 좌표로 이동하여 부품을 정렬  
 
-<br>
+---
 
 ## 💻 Tech Stack
 
 | Category | Technology |
 | :---: | :--- |
-| **Simulation** | ![IsaacSim](https://img.shields.io/badge/NVIDIA-Isaac_Sim-76B900?style=flat-square&logo=nvidia) ![Omniverse](https://img.shields.io/badge/NVIDIA-Omniverse-76B900?style=flat-square&logo=nvidia) |
-| **OS / Middleware** | ![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04-E95420?style=flat-square&logo=ubuntu) ![ROS2](https://img.shields.io/badge/ROS2-Humble-22314E?style=flat-square&logo=ros) |
-| **AI / Vision** | ![YOLOv8](https://img.shields.io/badge/YOLO-v8_OBB-00FFFF?style=flat-square) ![OpenCV](https://img.shields.io/badge/OpenCV-4.x-5C3EE8?style=flat-square&logo=opencv) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=pytorch) |
-| **Hardware** | UR10 / Doosan M0609, Intel RealSense D455 |
-| **Language** | ![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=flat-square&logo=python) ![C++](https://img.shields.io/badge/C++-00599C?style=flat-square&logo=c%2B%2B) |
+| **Simulation** | NVIDIA Isaac Sim / Omniverse |
+| **OS / Middleware** | Ubuntu 22.04 / ROS2 Humble |
+| **AI / Vision** | YOLOv8-OBB / OpenCV / PyTorch |
+| **Hardware** | UR10 / Doosan M0609 / Intel RealSense D455 |
+| **Language** | Python 3.10 / C++ |
 
-<br>
+---
 
 ## 🚀 Key Features & Logic
 
-### 1. Oriented Bounding Box (OBB) Detection
-기존의 수평적인 Bounding Box(AABB)는 회전된 물체의 정확한 각도를 알 수 없는 한계가 있었습니다. 이를 극복하기 위해 **YOLOv8-OBB** 모델을 도입하여 물체의 **Heading Angle(Yaw)** 값을 실시간으로 추론했습니다.
+### 0. ROS2 Node Composition (Perception → Decision → Control)
+- **obb_node.py**
+  - YOLOv8-OBB 기반 OBB 검출
+  - Depth + CameraInfo를 통한 3D Pose 계산
+  - OK / DEFECT 판정 + **Debounce 로직**
+  - 불량 확정 시 `/target_pose` **Latch Publish**
+  - RViz용 `/target_marker` 발행
 
-> **[여기에 PPT 17페이지의 YOLO 탐지 결과(초록색 박스 쳐진 것) 이미지를 넣으세요]**
+- **move_joint.py**
+  - `/moverobot`, `/target_pose` 구독
+  - **Approach → Pick → Retreat** 시퀀스 실행
+  - `/joint_command` 발행
+  - 발표 연출용 `/gripper_close` Bool 토픽 발행
 
-### 2. 3D Coordinate Conversion (Deprojection)
-2D 이미지 상의 픽셀 좌표 $(u, v)$를 3D 로봇 좌표계 $(x, y, z)$로 변환하기 위해 핀홀 카메라 모델을 적용했습니다.
+---
 
-$$
-X = (u - c_x) \times Z / f_x \\
-Y = (v - c_y) \times Z / f_y
-$$
+### ▶ Run Instructions (Parameter Tuning)
 
-* **$Z$**: Depth Map에서 추출한 심도 값
-* **$f_x, f_y$**: 카메라 초점 거리 (Focal Length)
-* **$c_x, c_y$**: 주점 (Principal Point)
+```bash
+# obb node
+ros2 run my_examples obb_node --ros-args \
+  -p model_path:=/home/rokey/ros2_ws/best.pt \
+  -p defect_need:=5 -p ok_need:=5 \
+  -p minangle_deg:=10.0 -p maxangle_deg:=70.0
 
-### 3. Digital Twin Simulation
-물리 엔진이 적용된 Isaac Sim 환경에서 컨베이어 벨트의 마찰력과 로봇의 동역학을 시뮬레이션하여, 실제 현장 도입 시 발생할 수 있는 시행착오를 최소화했습니다.
+# move node
+ros2 run my_examples move_joint --ros-args \
+  -p approach_sec:=1.2 -p pick_sec:=1.2 -p retreat_sec:=1.2 \
+  -p hold_after_retreat:=true \
+  -p hint_gain:=0.6
 
-> **[여기에 PPT 10페이지나 11페이지의 시뮬레이션 환경 캡처를 넣으세요]**
+# pose tuning (radian)
+ros2 run my_examples move_joint --ros-args \
+  -p pick_pose:="[1.6, -0.8, 1.35, -1.25, 1.60, 0.0]"
 
-<br>
+1. OBB Detection
 
-## 📊 Project Results
+YOLOv8-OBB를 사용하여 객체의 Yaw 각도까지 추정 가능.
 
-* [cite_start]**Detection Accuracy:** mAP50-95 기준 **90% 이상** 달성 [cite: 140]
-* [cite_start]**Pose Estimation Error:** 평균 오차 **5도 내외**로 정밀 보정 성공 [cite: 382]
-* **Impact:** 불량 부품의 자동 재정렬을 통해 공정 병목 현상 해소 및 생산 효율 증대 기대
+2. 3D Coordinate Conversion
 
-<br>
+핀홀 카메라 모델 기반 2D → 3D 변환:
 
-## 🎥 Demo Video
+X = (u - cx) * Z / fx
+Y = (v - cy) * Z / fy
 
-> **[여기에 시연 영상 GIF나 유튜브 링크를 넣으면 완벽합니다!]**
+3. Digital Twin Simulation
+
+Isaac Sim 환경에서 실제 공정을 시뮬레이션하여 현실 적용 시 리스크 감소.
+
+📊 Project Results
+
+Detection Accuracy: 90%+
+
+Pose Estimation Error: ~5°
+
+Impact: 공정 병목 감소 및 생산 효율 향상
+
+🎥 Demo Video
+
+[INSERT DEMO VIDEO LINK OR GIF HERE]
+
+📈 Communication Flow Chart (Mermaid)
+flowchart TD
+  CAM[Camera RGB/Depth] --> OBB[obb_node.py]
+  OBB -->|/object_pose| RVIZ
+  OBB -->|/target_pose| MOVE[move_joint.py]
+  OBB -->|/moverobot| MOVE
+  MOVE -->|/joint_command| ISAAC[IsaacSim]
+  MOVE -->|/gripper_close| RVIZ
+
+🧩 Architecture Diagram (Mermaid)
+flowchart LR
+  subgraph Perception
+    CAM --> OBB
+  end
+  subgraph Control
+    MOVE
+  end
+  OBB --> MOVE
+  MOVE --> ISAAC
+  OBB --> RVIZ
+
+
+---
+
+이 상태로 붙이면:
+
+- 기존 내용 유지  
+- 실행 명령 추가  
+- 노드 구조 설명 추가  
+- Flow / Architecture 이미지 위치 명확  
+- Mermaid까지 포함  
+
+**README 완성도 = 포트폴리오 수준** 됩니다.
