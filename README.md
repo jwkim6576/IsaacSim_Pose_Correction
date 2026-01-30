@@ -6,13 +6,14 @@
 
 ## 🗂️ 목차
 
-### 1. [Project Overview](#-project-overview)
-### 2. [Team & Roles](#-team--roles)
-### 3. [System Architecture](#-system-architecture)
-### 4. [Tech Stack](#-tech-stack)
-### 5. [Key Features & Logic](#-key-features--logic)
-### 6. [Project Results](#-project-results)
-### 7. [Demo Video](#-demo-video)
+1. [Project Overview](#-project-overview)
+2. [Team & Roles](#-team--roles)
+3. [System Architecture](#-system-architecture)
+4. [Tech Stack](#-tech-stack)
+5. [Key Features & Logic](#-key-features--logic)
+6. [Run Instructions](#-run-instructions)
+7. [Project Results](#-project-results)
+8. [Demo Video](#-demo-video)
 
 <br>
 
@@ -37,16 +38,15 @@
 
 ## 🛠 System Architecture
 
+![System Architecture](이미지_경로_여기에_넣기)
 
+이 시스템은 **Perception(인지) → Decision(판단) → Control(제어)**의 유기적인 데이터 파이프라인으로 구성됩니다.
 
-[Image of System Architecture Diagram]
+1.  **Vision Node (`obb_node.py`):** RGB-D 카메라 데이터를 받아 YOLO 추론 및 3D 좌표 변환 수행. 노이즈 제거 후 타겟 좌표 발행.
+2.  **Control Node (`move_joint.py`):** 타겟 좌표를 수신하여 역기구학(IK) 기반이 아닌, 관절(Joint) 단위의 정밀 시퀀스 제어 수행.
+3.  **Simulation (Isaac Sim):** 실제 물리 엔진이 적용된 환경에서 로봇과 그리퍼가 상호작용.
 
-
-이 시스템은 크게 **인지(Perception)**, **판단(Decision)**, **제어(Control)** 3단계로 구성됩니다.
-
-1.  **Input:** RealSense Depth Camera를 통해 RGB 및 Depth 데이터 수집
-2.  **3D Pose Estimation:** YOLOv8-OBB로 객체의 2D 좌표와 기울기($\theta$)를 검출하고, Depth 정보를 결합해 3D 공간 좌표(X, Y, Z)로 변환
-3.  **Robot Control:** 보정이 필요한 각도(Threshold 초과 시)가 감지되면 로봇이 해당 좌표로 이동하여 부품을 정렬
+![Communication Flow](이미지_경로_여기에_넣기)
 
 <br>
 
@@ -64,38 +64,55 @@
 
 ## 🚀 Key Features & Logic
 
-### 1. Oriented Bounding Box (OBB) Detection
-기존의 수평적인 Bounding Box(AABB)는 회전된 물체의 정확한 각도를 알 수 없는 한계가 있었습니다. 이를 극복하기 위해 **YOLOv8-OBB** 모델을 도입하여 물체의 **Heading Angle(Yaw)** 값을 실시간으로 추론했습니다.
+### 1. Robust Detection with Debounce Logic
+단순히 객체를 인식하는 것을 넘어, 현장의 조명이나 노이즈로 인한 오작동을 방지하기 위해 **Debounce 알고리즘**을 적용했습니다.
+* **Logic:** `defect_need` (기본값 5프레임) 이상 연속으로 불량이 감지될 때만 로봇에게 신호를 보냅니다. 반대로 `ok_need` 프레임 이상 정상이 유지되어야 상태를 해제합니다.
+* **Benefit:** 센서 데이터가 순간적으로 튀어서 로봇이 오작동하는 문제를 원천 차단했습니다.
 
-> **[여기에 PPT 17페이지의 YOLO 탐지 결과(초록색 박스 쳐진 것) 이미지를 넣으세요]**
+### 2. Motion Sequencing State Machine
+로봇의 움직임을 단일 명령이 아닌 **4단계 상태 머신(State Machine)**으로 정교하게 제어합니다.
+* **Step 1 Approach:** 타겟 좌표의 상단(`approach_pose`)으로 안전하게 진입
+* **Step 2 Pick:** 계산된 좌표로 하강하여 그리퍼 작동 (Visualizing Gripper Close)
+* **Step 3 Retreat:** 물체를 파지한 채 안전 높이로 상승
+* **Step 4 Return:** 홈 포지션 복귀
 
-### 2. 3D Coordinate Conversion (Deprojection)
-2D 이미지 상의 픽셀 좌표 $(u, v)$를 3D 로봇 좌표계 $(x, y, z)$로 변환하기 위해 핀홀 카메라 모델을 적용했습니다.
+### 3. Hybrid Pose Correction (Hint Gain)
+비전 센서의 계측 오차를 보정하기 위해 **Base Pose + Vision Offset** 방식을 사용했습니다.
+* 미리 정의된 `pick_base` 좌표에 비전 센서가 감지한 편차(Delta)에 가중치(`hint_gain`)를 적용하여 최종 목표 좌표를 생성합니다. 이를 통해 완전한 Blind Control보다 유연하고, Full Vision Control보다 안정적인 파지가 가능합니다.
 
-$$
-X = (u - c_x) \times Z / f_x \\
-Y = (v - c_y) \times Z / f_y
-$$
+<br>
 
-* **$Z$**: Depth Map에서 추출한 심도 값
-* **$f_x, f_y$**: 카메라 초점 거리 (Focal Length)
-* **$c_x, c_y$**: 주점 (Principal Point)
+## ▶ Run Instructions
 
-### 3. Digital Twin Simulation
-물리 엔진이 적용된 Isaac Sim 환경에서 컨베이어 벨트의 마찰력과 로봇의 동역학을 시뮬레이션하여, 실제 현장 도입 시 발생할 수 있는 시행착오를 최소화했습니다.
+본 프로젝트는 ROS2 패키지로 구성되어 있으며, 주요 노드는 파라미터를 통해 튜닝 가능합니다.
 
-> **[여기에 PPT 10페이지나 11페이지의 시뮬레이션 환경 캡처를 넣으세요]**
+
+# 1. Vision Node 실행 (YOLO 모델 경로 및 민감도 설정)
+ros2 run my_pkg obb_node_fin --ros-args \
+    -p model_path:="/path/to/best.pt" \
+    -p defect_need:=5 \
+    -p minangle_deg:=10.0
+
+# 2. Control Node 실행 (동작 속도 및 홈 포지션 설정)
+ros2 run my_pkg move_joint_fin --ros-args \
+    -p approach_sec:=1.5 \
+    -p pick_sec:=1.0 \
+    -p hint_gain:=0.8
 
 <br>
 
 ## 📊 Project Results
 
-* [cite_start]**Detection Accuracy:** mAP50-95 기준 **90% 이상** 달성 [cite: 140]
-* [cite_start]**Pose Estimation Error:** 평균 오차 **5도 내외**로 정밀 보정 성공 [cite: 382]
-* **Impact:** 불량 부품의 자동 재정렬을 통해 공정 병목 현상 해소 및 생산 효율 증대 기대
+  * [cite_start]**Detection Accuracy:** mAP50-95 기준 **90% 이상** 달성 [cite: 140]
+
+  * [cite_start]**Pose Estimation Error:** 평균 오차 **5도 내외**로 정밀 보정 성공 [cite: 382]
+
+  * **Impact:** 불량 부품의 자동 재정렬을 통해 공정 병목 현상 해소 및 생산 효율 증대 기대
 
 <br>
 
 ## 🎥 Demo Video
+
+
 
 > **[여기에 시연 영상 GIF나 유튜브 링크를 넣으면 완벽합니다!]**
