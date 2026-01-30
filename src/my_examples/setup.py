@@ -21,6 +21,7 @@ setup(
     entry_points={     
         'console_scripts': [
             'move_joint = my_examples.move_joint:main',
+            'move_joint_fin = my_examples.move_joint_fin:main',
         ],
     },
 )
