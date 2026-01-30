@@ -39,13 +39,19 @@
 
 [Image of System Architecture Diagram]
 
+---
+
 ### 📡 Communication Flow Chart
-> **[INSERT: Communication Flow Chart Image Here]**  
+> **[여기에 Flow Chart 스크린샷 이미지 삽입]**  
 > 예: `assets/flowchart.png`
 
-### 🧩 Architecture Structure Diagram
-> **[INSERT: Architecture Diagram Image Here]**  
+---
+
+### 🧩 ROS2 Architecture Structure
+> **[여기에 ROS2 아키텍처 구조도 스크린샷 이미지 삽입]**  
 > 예: `assets/architecture.png`
+
+---
 
 이 시스템은 크게 **인지(Perception)**, **판단(Decision)**, **제어(Control)** 3단계로 구성됩니다.
 
@@ -65,23 +71,26 @@
 | **Hardware** | UR10 / Doosan M0609 / Intel RealSense D455 |
 | **Language** | Python 3.10 / C++ |
 
----
+<br>
 
 ## 🚀 Key Features & Logic
 
 ### 0. ROS2 Node Composition (Perception → Decision → Control)
-- **obb_node.py**
-  - YOLOv8-OBB 기반 OBB 검출
-  - Depth + CameraInfo를 통한 3D Pose 계산
-  - OK / DEFECT 판정 + **Debounce 로직**
-  - 불량 확정 시 `/target_pose` **Latch Publish**
-  - RViz용 `/target_marker` 발행
 
-- **move_joint.py**
-  - `/moverobot`, `/target_pose` 구독
-  - **Approach → Pick → Retreat** 시퀀스 실행
-  - `/joint_command` 발행
-  - 발표 연출용 `/gripper_close` Bool 토픽 발행
+#### 🔹 obb_node.py (Perception + Decision)
+- YOLOv8-OBB 기반 Oriented Bounding Box 검출
+- Depth + CameraInfo를 활용한 3D Pose 계산
+- Yaw 각도 기반 OK / DEFECT 판정
+- **Debounce 로직**을 통해 오탐 감소
+- 불량 확정 시 `/target_pose` **Latch Publish**
+- RViz 시각화를 위한 `/target_marker`, `/object_marker` 발행
+
+#### 🔹 move_joint.py (Control)
+- `/moverobot`, `/target_pose` 구독
+- **Approach → Pick → Retreat** 로봇 모션 시퀀스 실행
+- `/joint_command` (JointState) 발행
+- 발표/연출 목적의 `/gripper_close` Bool 토픽 발행  
+  *(실제 하드웨어 환경에서는 그리퍼 드라이버로 연결 가능)*
 
 ---
 
@@ -104,63 +113,58 @@ ros2 run my_examples move_joint --ros-args \
 ros2 run my_examples move_joint --ros-args \
   -p pick_pose:="[1.6, -0.8, 1.35, -1.25, 1.60, 0.0]"
 
-1. OBB Detection
+---
 
-YOLOv8-OBB를 사용하여 객체의 Yaw 각도까지 추정 가능.
+## 🔧 주요 파라미터 설명
 
-2. 3D Coordinate Conversion
-
-핀홀 카메라 모델 기반 2D → 3D 변환:
-
-X = (u - cx) * Z / fx
-Y = (v - cy) * Z / fy
-
-3. Digital Twin Simulation
-
-Isaac Sim 환경에서 실제 공정을 시뮬레이션하여 현실 적용 시 리스크 감소.
-
-📊 Project Results
-
-Detection Accuracy: 90%+
-
-Pose Estimation Error: ~5°
-
-Impact: 공정 병목 감소 및 생산 효율 향상
-
-🎥 Demo Video
-
-[INSERT DEMO VIDEO LINK OR GIF HERE]
-
-📈 Communication Flow Chart (Mermaid)
-flowchart TD
-  CAM[Camera RGB/Depth] --> OBB[obb_node.py]
-  OBB -->|/object_pose| RVIZ
-  OBB -->|/target_pose| MOVE[move_joint.py]
-  OBB -->|/moverobot| MOVE
-  MOVE -->|/joint_command| ISAAC[IsaacSim]
-  MOVE -->|/gripper_close| RVIZ
-
-🧩 Architecture Diagram (Mermaid)
-flowchart LR
-  subgraph Perception
-    CAM --> OBB
-  end
-  subgraph Control
-    MOVE
-  end
-  OBB --> MOVE
-  MOVE --> ISAAC
-  OBB --> RVIZ
-
+| Parameter | Description |
+|----------|-------------|
+| `defect_need / ok_need` | 불량/정상 상태 전환을 위한 연속 프레임 수 |
+| `minangle_deg / maxangle_deg` | OK 판정 Yaw 각도 범위 |
+| `approach_sec / pick_sec / retreat_sec` | 모션 시퀀스 단계별 유지 시간 |
+| `pick_pose / approach_pose` | 로봇 관절 목표 각도 (라디안) |
+| `hint_gain` | `/target_pose` 기반 joint_1 보정 강도 |
 
 ---
 
-이 상태로 붙이면:
+## 1. Oriented Bounding Box (OBB) Detection
 
-- 기존 내용 유지  
-- 실행 명령 추가  
-- 노드 구조 설명 추가  
-- Flow / Architecture 이미지 위치 명확  
-- Mermaid까지 포함  
+YOLOv8-OBB를 사용하여 물체의 **Heading Angle (Yaw)** 까지 추정 가능합니다.
 
-**README 완성도 = 포트폴리오 수준** 됩니다.
+> **[여기에 YOLO OBB Detection 결과 스크린샷 삽입]**
+
+---
+
+## 2. 3D Coordinate Conversion (Deprojection)
+
+```text
+X = (u - cx) * Z / fx
+Y = (v - cy) * Z / fy
+
+- **Z**: Depth Map에서 추출한 거리 값  
+- **fx, fy**: 카메라 초점 거리 (Focal Length)  
+- **cx, cy**: 주점 좌표 (Principal Point)
+
+---
+
+## 3. Digital Twin Simulation
+
+Isaac Sim 환경에서 실제 공정을 시뮬레이션하여 현실 적용 시 발생할 수 있는 시행착오를 최소화합니다.
+
+> **[여기에 IsaacSim 환경 스크린샷 삽입]**
+
+---
+
+## 📊 Project Results
+
+- **Detection Accuracy:** mAP50-95 기준 **90% 이상**  
+- **Pose Estimation Error:** 평균 오차 **5도 내외**  
+- **Impact:** 불량 부품 자동 재정렬 → 공정 병목 현상 감소 및 생산 효율 향상
+
+---
+
+## 🎥 Demo Video
+
+> **[여기에 시연 영상 GIF 또는 유튜브 링크 삽입]**
+
+---
