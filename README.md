@@ -68,8 +68,8 @@
 | **Simulation** | NVIDIA Isaac Sim / Omniverse |
 | **OS / Middleware** | Ubuntu 22.04 / ROS2 Humble |
 | **AI / Vision** | YOLOv8-OBB / OpenCV / PyTorch |
-| **Hardware** | UR10 / Doosan M0609 / Intel RealSense D455 |
-| **Language** | Python 3.10 / C++ |
+| **Hardware** | Doosan M0609 / Intel RealSense D455 |
+| **Language** | Python 3.10 |
 
 <br>
 
